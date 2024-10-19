@@ -69,7 +69,6 @@ export const register = async (nombre, cedula,correo,contrasena) => {
       const response = await axios.post(`${API_URL}/auth/register`, { nombre, cedula,correo,contrasena ,rol:'USER' });
       return response.data;
     } catch (error) {
-      console.error('Error durante el registro:', error);
-      throw error;
+      throw new Error('Error durante el registro');
     }
   };

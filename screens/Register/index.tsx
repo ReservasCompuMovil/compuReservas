@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { showMessage } from 'react-native-flash-message';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
-
-const RegisterScreen = ({ onRegister, onReturn }) => {
+type RegisterScreenProps = {
+  onRegister: (username: string, documento: string, email: string, password: string) => void;
+  onReturn: () => void;
+};
+const RegisterScreen: React.FC<RegisterScreenProps> = ({ onRegister, onReturn }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [documento, setDocumento] = useState('');

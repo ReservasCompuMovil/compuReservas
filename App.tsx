@@ -1,18 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { login, register, logout, isTokenValid, refreshTokenIfNeeded } from './api';
-import HomeScreen from './screens/Home';
-import RegisterScreen from './screens/Register';
 import { ActivityIndicator, StyleSheet, View } from 'react-native'; // Para mostrar el estado de carga
-import LoginScreen from './screens/Login';
 import FlashMessage, { showMessage } from 'react-native-flash-message';
+import HomeScreen from './screens/Home';
+import LoginScreen from './screens/Login';
+import RegisterScreen from './screens/Register';
 const Stack = createStackNavigator();
 
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true); // Estado de carga mientras se verifica el token
-
+  const flashMessageRef = useRef<FlashMessage>(null);
   useEffect(() => {
     checkLoginStatus();
   }, []);
@@ -65,9 +65,16 @@ const App = () => {
   const handleRegister = async (username:string, cedula:string, correo:string, contraseña:string) => {
     try {
       await register(username, cedula, correo, contraseña);
-      // alert('Registro exitoso. Por favor, inicia sesión.');
+      showMessage({
+        message: 'Registro exitoso. ',
+        description: 'Por favor, inicia sesión.',
+        type: 'success',
+      });
     } catch (error) {
-      // alert('Error al registrarse. Por favor, intenta de nuevo.');
+     showMessage({
+        message: 'Error al registrarse. Por favor, intenta de nuevo.',
+        type: 'danger',
+      });
     }
   };
 
@@ -92,7 +99,6 @@ const App = () => {
 
   return (
     <>
-    <FlashMessage position="top" />
     <NavigationContainer>
       <Stack.Navigator>
         {isLoggedIn ? (
@@ -123,6 +129,8 @@ const App = () => {
         )}
       </Stack.Navigator>
     </NavigationContainer>
+    <FlashMessage position="top" ref={flashMessageRef} />
+
     </>
   );
 };

@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 
+type LoginScreenProps = {
+  onLogin: (email: string, password: string) => Promise<void>;
+  onRegister: () => void;
+};
 
 
-const LoginScreen = ({ onLogin, onRegister }) => {
+const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');

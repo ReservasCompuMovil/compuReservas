@@ -1,8 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { getToken } from '../../api';
-const HomeScreen = ({ onLogout }) => {
-  const [token, setToken] = useState(null);
+
+type HomeScreenProps = {
+  onLogout: () => void;
+};
+
+
+const HomeScreen: React.FC<HomeScreenProps> = ({ onLogout }) => {
+  const [token, setToken] = useState<string | null>(null);
     console.log(token);
     useEffect(() => {
         const fetchToken = async () => {
