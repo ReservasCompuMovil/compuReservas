@@ -1,118 +1,136 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
+import React, { useState, useEffect } from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
+import { login, register, logout, isTokenValid, refreshTokenIfNeeded } from './api';
+import HomeScreen from './screens/Home';
+import RegisterScreen from './screens/Register';
+import { ActivityIndicator, StyleSheet, View } from 'react-native'; // Para mostrar el estado de carga
+import LoginScreen from './screens/Login';
+import FlashMessage, { showMessage } from 'react-native-flash-message';
+const Stack = createStackNavigator();
 
-import React from 'react';
-import type {PropsWithChildren} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+const App = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [loading, setLoading] = useState(true); // Estado de carga mientras se verifica el token
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+  useEffect(() => {
+    checkLoginStatus();
+  }, []);
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
-
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-}
-
-function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+  // Verificar si hay un token válido al abrir la app
+  const checkLoginStatus = async () => {
+    setLoading(true); // Mostrar la pantalla de carga mientras se valida el token
+    const tokenValid = await isTokenValid(); // Verifica si el token en AsyncStorage es válido
+    if (!tokenValid) {
+      await refreshTokenIfNeeded(); // Intenta refrescar el token si es necesario
+    }
+    setIsLoggedIn(tokenValid); // Actualiza el estado de autenticación
+    setLoading(false); // Oculta la pantalla de carga
   };
 
-  return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
-}
+  // Manejar el inicio de sesión
+  const handleLogin = async (username:string, password:string) => {
+    try {
+      await login(username, password);
+      setIsLoggedIn(true);
+    } catch (error) {
+      // Verificar si el error tiene una propiedad message
+      if (typeof error === 'object' && error !== null && 'message' in error) {
+        const errorMessage = (error as { message?: string }).message;
 
+        if (errorMessage === 'Usuario o contraseña incorrectos') {
+          // Mostrar un mensaje de error específico cuando las credenciales son incorrectas
+          showMessage({
+            message: 'Usuario o contraseña incorrectos',
+            type: 'danger',
+          });
+        } else {
+          // Mostrar un mensaje genérico para otros tipos de errores
+          showMessage({
+            message: 'Error al iniciar sesión. Inténtalo más tarde.',
+            type: 'danger',
+          });
+        }
+      } else {
+        // En caso de que el error no sea un objeto o no tenga message
+        showMessage({
+          message: 'Error desconocido. Inténtalo más tarde.',
+          type: 'danger',
+        });
+      }
+    }
+  };
+
+  // Manejar el registro
+  const handleRegister = async (username:string, cedula:string, correo:string, contraseña:string) => {
+    try {
+      await register(username, cedula, correo, contraseña);
+      // alert('Registro exitoso. Por favor, inicia sesión.');
+    } catch (error) {
+      // alert('Error al registrarse. Por favor, intenta de nuevo.');
+    }
+  };
+
+  // Manejar el cierre de sesión
+  const handleLogout = async () => {
+    try {
+      await logout();
+      setIsLoggedIn(false);
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error);
+    }
+  };
+
+  // Si la app está cargando, muestra un indicador de carga
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
+  }
+
+  return (
+    <>
+    <FlashMessage position="top" />
+    <NavigationContainer>
+      <Stack.Navigator>
+        {isLoggedIn ? (
+          <Stack.Screen name="Home" options={{ headerShown: false }}>
+            {(props) => <HomeScreen {...props} onLogout={handleLogout} />}
+          </Stack.Screen>
+        ) : (
+          <>
+            <Stack.Screen name="Login" options={{ headerShown: false }}>
+              {(props) => (
+                <LoginScreen
+                  {...props}
+                  onLogin={handleLogin}
+                  onRegister={() => props.navigation.navigate('Register')}
+                />
+              )}
+            </Stack.Screen>
+            <Stack.Screen name="Register" options={{ headerShown: false }}>
+              {(props) => (
+                <RegisterScreen
+                  {...props}
+                  onRegister={handleRegister}
+                  onReturn={() => props.navigation.navigate('Login')}
+                />
+              )}
+            </Stack.Screen>
+          </>
+        )}
+      </Stack.Navigator>
+    </NavigationContainer>
+    </>
+  );
+};
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
-
 export default App;
