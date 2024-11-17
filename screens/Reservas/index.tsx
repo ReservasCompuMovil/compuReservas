@@ -27,7 +27,7 @@ export const ReservationsScreen: React.FC = () => {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-//   const [userId, setUserId] = useState<number | null>(null);
+  const [userId, setUserId] = useState<number | null>(null);
 
   const getUserIdFromToken = async () => {
     try {
@@ -37,8 +37,9 @@ export const ReservationsScreen: React.FC = () => {
       }
       const payload = token.split('.')[1];
       const decodedPayload = JSON.parse(atob(payload));
-    //   setUserId(decodedPayload.id);
-      return decodedPayload.id;
+      // console.log(decodedPayload)
+      setUserId(decodedPayload.id_usuario);
+      return decodedPayload.id_usuario;
     } catch (error) {
       console.error('Error al obtener el ID del usuario:', error);
       throw error;
@@ -48,7 +49,7 @@ export const ReservationsScreen: React.FC = () => {
   const fetchReservations = async () => {
     try {
       setLoading(true);
-      const userId = await getUserIdFromToken() ?? 1;
+      const userId = await getUserIdFromToken();
       const response = await fetch(`${BACKEND_URL}/reserva/usuario/${userId}`);
       const data = await response.json();
         if (data.length === 0) {
