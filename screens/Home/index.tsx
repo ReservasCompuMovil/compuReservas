@@ -4,17 +4,23 @@ import { getToken } from '../../api';
 
 type HomeScreenProps = {
   onLogout: () => void;
+  onVerEspacios: () => void;
+  onCrearReserva: () => void;
+  onVerMisReservas: () => void;
+  onCrearEspacio: () => void;
 };
 
 
-const HomeScreen: React.FC<HomeScreenProps> = ({ onLogout }) => {
-  const [token, setToken] = useState<string | null>(null);
-    console.log(token);
+const HomeScreen: React.FC<HomeScreenProps> = ({ onLogout, onVerEspacios,onCrearReserva,onVerMisReservas,onCrearEspacio  }) => {
+  const [role, setRole] = useState<string | null>(null);
+  
     useEffect(() => {
         const fetchToken = async () => {
           try {
             const storedToken = await getToken(); // Recupera el token desde AsyncStorage
-            setToken(storedToken); // Guarda el token en el estado para mostrarlo en la UI si es necesario
+            const payload = storedToken.split('.')[1];
+             const decodedPayload = JSON.parse(atob(payload));
+             setRole(decodedPayload.rol);
           } catch (error) {
             console.error('Error al recuperar el token:', error);
           }
@@ -28,7 +34,24 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onLogout }) => {
       <Text style={styles.instructions}>
         Aquí puedes agregar funcionalidades adicionales para tu aplicación.
       </Text>
-      <TouchableOpacity style={styles.button} onPress={onLogout}>
+      <TouchableOpacity style={styles.button} onPress={onVerEspacios}>
+        <Text style={styles.buttonText}>Ver espacios</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.button} onPress={onCrearReserva}>
+        <Text style={styles.buttonText}>Crear Reserva</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.button} onPress={onVerMisReservas}>
+        <Text style={styles.buttonText}>Mis reservas</Text>
+      </TouchableOpacity>
+      
+      {
+        role === 'ROLE_ADMIN' ? (
+          <TouchableOpacity style={styles.button} onPress={onCrearEspacio}>
+            <Text style={styles.buttonText}>Crear Espacio</Text>
+          </TouchableOpacity>
+        ) : null
+      }
+      <TouchableOpacity style={styles.logout} onPress={onLogout}>
         <Text style={styles.buttonText}>Cerrar Sesión</Text>
       </TouchableOpacity>
     </View>
@@ -42,6 +65,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#b1de9e',
     padding: 20,
+  },
+  logout: {
+    backgroundColor: '#9F543E',
+    padding: 10,
+    borderRadius: 5,
+    width: '80%',
+    alignItems: 'center',
+    marginTop: 100,
   },
   welcome: {
     fontSize: 24,
@@ -62,6 +93,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     width: '80%',
     alignItems: 'center',
+    marginTop: 20,
   },
   buttonText: {
     color: 'white',
